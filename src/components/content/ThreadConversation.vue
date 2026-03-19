@@ -382,6 +382,7 @@ type MessageBlock =
 let scrollRestoreFrame = 0
 let bottomLockFrame = 0
 let bottomLockFramesLeft = 0
+let ignoreNextProgrammaticScroll = false
 const trackedPendingImages = new WeakSet<HTMLImageElement>()
 const failedMarkdownImageKeys = ref<Set<string>>(new Set())
 
@@ -755,6 +756,7 @@ function scrollToBottom(): void {
   const container = conversationListRef.value
   const anchor = bottomAnchorRef.value
   if (!container || !anchor) return
+  ignoreNextProgrammaticScroll = true
   container.scrollTop = container.scrollHeight
   anchor.scrollIntoView({ block: 'end' })
 }
@@ -916,6 +918,16 @@ watch(
 function onConversationScroll(): void {
   const container = conversationListRef.value
   if (!container || props.isLoading) return
+  if (ignoreNextProgrammaticScroll) {
+    ignoreNextProgrammaticScroll = false
+    emitScrollState(container)
+    return
+  }
+  if (!isAtBottom(container) && bottomLockFrame) {
+    cancelAnimationFrame(bottomLockFrame)
+    bottomLockFrame = 0
+    bottomLockFramesLeft = 0
+  }
   emitScrollState(container)
 }
 
@@ -970,7 +982,7 @@ onBeforeUnmount(() => {
 @reference "tailwindcss";
 
 .conversation-root {
-  @apply h-full min-h-0 p-0 flex flex-col overflow-y-hidden overflow-x-visible bg-transparent border-none rounded-none;
+  @apply h-full min-h-0 p-0 flex flex-col overflow-y-hidden overflow-x-hidden bg-transparent border-none rounded-none;
 }
 
 .conversation-root.is-compact {
@@ -986,11 +998,13 @@ onBeforeUnmount(() => {
 }
 
 .conversation-list {
-  @apply h-full min-h-0 list-none m-0 px-2 sm:px-6 py-0 overflow-y-auto overflow-x-visible flex flex-col gap-2 sm:gap-3;
+  @apply h-full min-h-0 list-none m-0 px-2 sm:px-6 py-0 overflow-y-auto overflow-x-hidden flex flex-col gap-2 sm:gap-3;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .conversation-root.is-compact .conversation-list {
-  @apply px-3 py-1 gap-2.5;
+  @apply px-0 py-1 gap-2.5;
 }
 
 .conversation-item {
@@ -1006,7 +1020,7 @@ onBeforeUnmount(() => {
 }
 
 .message-row {
-  @apply relative w-full max-w-180 mx-auto flex;
+  @apply relative w-full max-w-180 mx-auto flex overflow-x-hidden;
 }
 
 .message-row[data-role='user'] {
@@ -1023,7 +1037,7 @@ onBeforeUnmount(() => {
 }
 
 .message-stack {
-  @apply flex flex-col w-full;
+  @apply flex flex-col w-full min-w-0;
 }
 
 .request-card {
@@ -1113,7 +1127,7 @@ onBeforeUnmount(() => {
 }
 
 .message-body {
-  @apply flex flex-col max-w-full;
+  @apply flex flex-col max-w-full min-w-0;
   width: fit-content;
 }
 
@@ -1168,10 +1182,16 @@ onBeforeUnmount(() => {
 
 .message-text {
   @apply m-0 text-sm leading-relaxed whitespace-pre-wrap text-slate-800;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .message-markdown-image {
   @apply w-auto h-auto max-w-[min(560px,85vw)] max-h-[min(460px,62vh)] object-contain bg-white;
+}
+
+.conversation-root.is-compact .message-markdown-image {
+  @apply max-w-screen rounded-none;
 }
 
 .message-inline-code {
@@ -1199,7 +1219,7 @@ onBeforeUnmount(() => {
 }
 
 .conversation-root.is-compact .message-card[data-role='user'] {
-  @apply rounded-[1.4rem] bg-stone-900 px-3 py-2 text-stone-50 shadow-[0_10px_24px_rgba(28,25,23,0.14)];
+  @apply rounded-[1.4rem] bg-black px-3 py-2 text-white shadow-[0_14px_32px_rgba(0,0,0,0.22)];
 }
 
 .message-card[data-role='assistant'],
@@ -1212,7 +1232,15 @@ onBeforeUnmount(() => {
 }
 
 .conversation-root.is-compact .message-card[data-role='user'] .message-text {
-  @apply text-stone-50;
+  @apply text-white;
+}
+
+.conversation-root.is-compact .message-card[data-role='user'] .message-inline-code {
+  @apply border-white/20 bg-white/10 text-white;
+}
+
+.conversation-root.is-compact .message-card[data-role='user'] .message-file-link {
+  @apply text-stone-200 hover:text-white;
 }
 
 .conversation-item[data-message-type='worked'] .message-stack,
@@ -1352,6 +1380,7 @@ onBeforeUnmount(() => {
   transition: grid-template-rows 300ms ease-out, border-color 300ms ease-out;
   border: 1px solid transparent;
   border-top: none;
+  overflow: hidden;
 }
 
 .cmd-output-wrap.cmd-output-visible {
