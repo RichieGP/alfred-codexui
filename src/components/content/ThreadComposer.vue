@@ -687,7 +687,7 @@ watch(
 @reference "tailwindcss";
 
 .thread-composer {
-  @apply w-full max-w-175 mx-auto px-2 sm:px-6;
+  @apply w-full max-w-175 mx-auto px-0 sm:px-6;
 }
 
 .thread-composer-shell {
@@ -819,7 +819,7 @@ watch(
 }
 
 .thread-composer-controls {
-  @apply relative mt-2 sm:mt-3 flex items-center gap-2 sm:gap-4 overflow-visible;
+  @apply relative mt-2 sm:mt-3 flex flex-wrap items-center gap-2 sm:gap-4 overflow-visible;
 }
 
 .thread-composer-attach {
@@ -839,7 +839,7 @@ watch(
 }
 
 .thread-composer-control {
-  @apply shrink-1 min-w-0;
+  @apply min-w-0 flex-1 basis-[calc(50%-0.25rem)] sm:basis-auto sm:flex-none;
 }
 
 .thread-composer-control :deep(.composer-dropdown-value) {
@@ -847,7 +847,7 @@ watch(
 }
 
 .thread-composer-actions {
-  @apply ml-auto flex items-center gap-2;
+  @apply flex items-center gap-2 ml-auto max-sm:w-full max-sm:justify-end;
 }
 
 .thread-composer-mic {
