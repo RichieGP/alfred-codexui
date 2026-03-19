@@ -1,9 +1,9 @@
 <template>
-  <div class="desktop-layout" :class="{ 'is-mobile': isMobile }" :style="layoutStyle">
+  <div class="desktop-layout" :class="{ 'is-mobile': isMobile, 'is-compact': isCompactMode }" :style="layoutStyle">
     <Teleport v-if="isMobile" to="body">
       <Transition name="drawer">
         <div v-if="!isSidebarCollapsed" class="mobile-drawer-backdrop" @click="$emit('close-sidebar')">
-          <aside class="mobile-drawer" @click.stop>
+          <aside class="mobile-drawer" :class="{ 'is-compact': isCompactMode }" @click.stop>
             <slot name="sidebar" />
           </aside>
         </div>
@@ -36,9 +36,11 @@ import { useMobile } from '../../composables/useMobile'
 const props = withDefaults(
   defineProps<{
     isSidebarCollapsed?: boolean
+    isCompactMode?: boolean
   }>(),
   {
     isSidebarCollapsed: false,
+    isCompactMode: false,
   },
 )
 
@@ -133,11 +135,15 @@ function onResizeHandleMouseDown(event: MouseEvent): void {
 }
 
 .mobile-drawer-backdrop {
-  @apply fixed inset-0 z-40 bg-black/40;
+  @apply fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px];
 }
 
 .mobile-drawer {
   @apply absolute top-0 left-0 bottom-0 w-[85vw] max-w-80 bg-slate-100 overflow-hidden shadow-2xl;
+}
+
+.mobile-drawer.is-compact {
+  @apply w-[88vw] max-w-[24rem] border-r border-white/10 bg-stone-950;
 }
 
 .drawer-enter-active,

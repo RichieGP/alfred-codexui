@@ -1,8 +1,17 @@
 <template>
-  <DesktopLayout :is-sidebar-collapsed="isSidebarCollapsed" @close-sidebar="setSidebarCollapsed(true)">
+  <DesktopLayout
+    :is-sidebar-collapsed="isSidebarCollapsed"
+    :is-compact-mode="isCompactMode"
+    @close-sidebar="setSidebarCollapsed(true)"
+  >
     <template #sidebar>
-      <section class="sidebar-root">
+      <section class="sidebar-root" :class="{ 'is-compact': isCompactMode }">
         <div class="sidebar-scrollable">
+          <div v-if="isCompactMode" class="alfred-mobile-mark">
+            <p class="alfred-mobile-eyebrow">Alfred Codex</p>
+            <p class="alfred-mobile-title">Projects and threads</p>
+          </div>
+
           <SidebarThreadControls
             v-if="!isSidebarCollapsed"
             class="sidebar-thread-controls-host"
@@ -95,8 +104,8 @@
     </template>
 
     <template #content>
-      <section class="content-root">
-        <ContentHeader :title="contentTitle">
+      <section class="content-root" :class="{ 'is-compact': isCompactMode }">
+        <ContentHeader :title="contentTitle" :is-compact-mode="isCompactMode">
           <template #leading>
             <SidebarThreadControls
               v-if="isSidebarCollapsed || isMobile"
@@ -112,7 +121,7 @@
           </template>
         </ContentHeader>
 
-        <section class="content-body">
+        <section class="content-body" :class="{ 'is-compact': isCompactMode }">
           <template v-if="isSkillsRoute">
             <SkillsHub @skills-changed="onSkillsChanged" />
           </template>
@@ -165,6 +174,7 @@
                   :pending-requests="selectedThreadServerRequests"
                   :is-turn-in-progress="isSelectedThreadInProgress"
                   :is-rolling-back="isRollingBack"
+                  :is-compact-mode="isCompactMode"
                   @update-scroll-state="onUpdateThreadScrollState"
                   @respond-server-request="onRespondServerRequest"
                   @rollback="onRollback" />
@@ -193,7 +203,7 @@
       </section>
     </template>
   </DesktopLayout>
-  <div class="build-badge" aria-label="Worktree name and version">
+  <div v-if="!isCompactMode" class="build-badge" aria-label="Worktree name and version">
     WT {{ worktreeName }} · v{{ appVersion }}
   </div>
 </template>
@@ -303,6 +313,7 @@ const DARK_MODE_KEY = 'codex-web-local.dark-mode.v1'
 const sendWithEnter = ref(loadBoolPref(SEND_WITH_ENTER_KEY, true))
 const inProgressSendMode = ref<'steer' | 'queue'>(loadInProgressSendModePref())
 const darkMode = ref<'system' | 'light' | 'dark'>(loadDarkModePref())
+const isCompactMode = ref(loadCompactMode())
 
 const routeThreadId = computed(() => {
   const rawThreadId = route.params.threadId
@@ -684,6 +695,13 @@ function loadBoolPref(key: string, fallback: boolean): boolean {
   return v === '1'
 }
 
+function loadCompactMode(): boolean {
+  if (typeof window === 'undefined') return false
+  const params = new URLSearchParams(window.location.search)
+  const raw = (params.get('compact') ?? params.get('mobile') ?? '').trim().toLowerCase()
+  return raw === '1' || raw === 'true' || raw === 'yes'
+}
+
 function loadDarkModePref(): 'system' | 'light' | 'dark' {
   if (typeof window === 'undefined') return 'system'
   const v = window.localStorage.getItem(DARK_MODE_KEY)
@@ -729,6 +747,7 @@ function applyDarkMode(): void {
 
 function loadSidebarCollapsed(): boolean {
   if (typeof window === 'undefined') return false
+  if (loadCompactMode()) return true
   return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === '1'
 }
 
@@ -873,6 +892,17 @@ watch(isMobile, (mobile) => {
   }
 })
 
+watch(
+  () => route.fullPath,
+  () => {
+    const nextCompactMode = loadCompactMode()
+    isCompactMode.value = nextCompactMode
+    if (nextCompactMode && isMobile.value) {
+      setSidebarCollapsed(true)
+    }
+  },
+)
+
 async function submitFirstMessageForNewThread(
   text: string,
   imageUrls: string[] = [],
@@ -918,6 +948,10 @@ async function submitFirstMessageForNewThread(
   @apply h-full flex flex-col select-none;
 }
 
+.sidebar-root.is-compact {
+  @apply bg-stone-950 text-stone-100;
+}
+
 .sidebar-root input,
 .sidebar-root textarea {
   @apply select-text;
@@ -927,8 +961,24 @@ async function submitFirstMessageForNewThread(
   @apply flex-1 min-h-0 overflow-y-auto py-4 px-2 flex flex-col gap-2;
 }
 
+.alfred-mobile-mark {
+  @apply mx-2 mb-1 rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.24),_transparent_46%),linear-gradient(180deg,_rgba(39,39,42,0.96),_rgba(12,10,9,0.98))] px-3 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.35)];
+}
+
+.alfred-mobile-eyebrow {
+  @apply m-0 text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-300/90;
+}
+
+.alfred-mobile-title {
+  @apply mt-1 m-0 text-sm font-medium text-stone-100;
+}
+
 .content-root {
   @apply h-full min-h-0 w-full flex flex-col overflow-y-hidden overflow-x-visible bg-white;
+}
+
+.content-root.is-compact {
+  @apply bg-[linear-gradient(180deg,#f7f3eb_0%,#fcfbf8_38%,#ffffff_100%)];
 }
 
 .sidebar-thread-controls-host {
@@ -977,6 +1027,10 @@ async function submitFirstMessageForNewThread(
 
 .sidebar-thread-controls-header-host {
   @apply ml-1;
+}
+
+.content-body.is-compact {
+  @apply gap-2 pt-0 pb-2;
 }
 
 .content-body {
@@ -1049,6 +1103,58 @@ async function submitFirstMessageForNewThread(
 
 .sidebar-settings-area {
   @apply shrink-0 bg-slate-100 pt-2 px-2 pb-2 border-t border-zinc-200;
+}
+
+.sidebar-root.is-compact .sidebar-scrollable {
+  @apply bg-transparent;
+}
+
+.sidebar-root.is-compact .sidebar-settings-area {
+  @apply bg-stone-950 border-white/10;
+}
+
+.sidebar-root.is-compact .sidebar-settings-button {
+  @apply text-stone-300 hover:bg-white/8 hover:text-white;
+}
+
+.sidebar-root.is-compact .sidebar-settings-panel {
+  @apply border-white/10 bg-stone-900;
+}
+
+.sidebar-root.is-compact .sidebar-settings-row {
+  @apply text-stone-200 hover:bg-white/6;
+}
+
+.sidebar-root.is-compact .sidebar-settings-row + .sidebar-settings-row {
+  @apply border-white/10;
+}
+
+.sidebar-root.is-compact .sidebar-settings-value {
+  @apply bg-white/10 text-stone-300;
+}
+
+.sidebar-root.is-compact .sidebar-skills-link {
+  @apply text-stone-300 hover:bg-white/8 hover:text-white;
+}
+
+.sidebar-root.is-compact .sidebar-skills-link.is-active {
+  @apply bg-white/10 text-white;
+}
+
+.sidebar-root.is-compact .sidebar-search-toggle {
+  @apply text-stone-300 hover:border-white/10 hover:bg-white/8;
+}
+
+.sidebar-root.is-compact .sidebar-search-toggle[aria-pressed='true'] {
+  @apply border-white/10 bg-white/10 text-white;
+}
+
+.sidebar-root.is-compact .sidebar-search-bar {
+  @apply border-white/10 bg-white/6;
+}
+
+.sidebar-root.is-compact .sidebar-search-input {
+  @apply text-stone-100 placeholder-stone-500;
 }
 
 .sidebar-settings-button {

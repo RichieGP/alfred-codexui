@@ -1,5 +1,5 @@
 <template>
-  <section class="conversation-root">
+  <section class="conversation-root" :class="{ 'is-compact': isCompactMode }">
     <p v-if="isLoading" class="conversation-loading">Loading messages...</p>
 
     <p
@@ -236,7 +236,7 @@
             <article class="live-overlay-inline" aria-live="polite">
               <p class="live-overlay-label">{{ liveOverlay.activityLabel }}</p>
               <p
-                v-if="liveOverlay.reasoningText"
+                v-if="!isCompactMode && liveOverlay.reasoningText"
                 class="live-overlay-reasoning"
                 ref="liveOverlayReasoningRef"
               >
@@ -355,6 +355,7 @@ const props = defineProps<{
   scrollState: ThreadScrollState | null
   isTurnInProgress?: boolean
   isRollingBack?: boolean
+  isCompactMode?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -972,6 +973,10 @@ onBeforeUnmount(() => {
   @apply h-full min-h-0 p-0 flex flex-col overflow-y-hidden overflow-x-visible bg-transparent border-none rounded-none;
 }
 
+.conversation-root.is-compact {
+  @apply px-0;
+}
+
 .conversation-loading {
   @apply m-0 px-2 sm:px-6 text-sm text-slate-500;
 }
@@ -982,6 +987,10 @@ onBeforeUnmount(() => {
 
 .conversation-list {
   @apply h-full min-h-0 list-none m-0 px-2 sm:px-6 py-0 overflow-y-auto overflow-x-visible flex flex-col gap-2 sm:gap-3;
+}
+
+.conversation-root.is-compact .conversation-list {
+  @apply px-3 py-1 gap-2.5;
 }
 
 .conversation-item {
@@ -1073,8 +1082,16 @@ onBeforeUnmount(() => {
   @apply w-full max-w-180 px-0 py-1 flex flex-col gap-1;
 }
 
+.conversation-root.is-compact .live-overlay-inline {
+  @apply rounded-2xl border border-amber-200/80 bg-amber-50/90 px-3 py-2;
+}
+
 .live-overlay-label {
   @apply m-0 text-sm leading-5 font-medium text-zinc-600;
+}
+
+.conversation-root.is-compact .live-overlay-label {
+  @apply text-[13px] font-semibold text-amber-900;
 }
 
 .live-overlay-reasoning {
@@ -1181,9 +1198,21 @@ onBeforeUnmount(() => {
   align-self: flex-end;
 }
 
+.conversation-root.is-compact .message-card[data-role='user'] {
+  @apply rounded-[1.4rem] bg-stone-900 px-3 py-2 text-stone-50 shadow-[0_10px_24px_rgba(28,25,23,0.14)];
+}
+
 .message-card[data-role='assistant'],
 .message-card[data-role='system'] {
   @apply px-0 py-0 bg-transparent border-none rounded-none;
+}
+
+.conversation-root.is-compact .message-text {
+  @apply text-[14px] leading-6 text-stone-800;
+}
+
+.conversation-root.is-compact .message-card[data-role='user'] .message-text {
+  @apply text-stone-50;
 }
 
 .conversation-item[data-message-type='worked'] .message-stack,
@@ -1196,8 +1225,16 @@ onBeforeUnmount(() => {
   @apply w-full flex flex-col gap-0;
 }
 
+.conversation-root.is-compact .worked-separator-wrap {
+  @apply rounded-2xl border border-stone-200 bg-white/90 px-3 py-2 shadow-[0_12px_30px_rgba(28,25,23,0.05)];
+}
+
 .worked-separator {
   @apply w-full flex items-center gap-3 bg-transparent border-none cursor-pointer p-0;
+}
+
+.conversation-root.is-compact .worked-separator {
+  @apply gap-2.5;
 }
 
 .worked-chevron {
@@ -1212,8 +1249,16 @@ onBeforeUnmount(() => {
   @apply h-px bg-zinc-300/80 flex-1;
 }
 
+.conversation-root.is-compact .worked-separator-line {
+  @apply bg-stone-200;
+}
+
 .worked-separator-text {
   @apply m-0 text-sm leading-relaxed font-normal text-slate-800;
+}
+
+.conversation-root.is-compact .worked-separator-text {
+  @apply text-[13px] font-medium text-stone-700;
 }
 
 .worked-details {
@@ -1262,6 +1307,10 @@ onBeforeUnmount(() => {
 
 .cmd-row {
   @apply w-full flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 cursor-pointer transition text-left hover:bg-zinc-100;
+}
+
+.conversation-root.is-compact .cmd-row {
+  @apply rounded-2xl border-stone-200 bg-stone-50 px-3 py-2 shadow-[0_8px_20px_rgba(28,25,23,0.04)];
 }
 
 .cmd-row.cmd-expanded {
