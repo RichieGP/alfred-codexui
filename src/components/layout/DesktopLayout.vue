@@ -143,7 +143,7 @@ function onResizeHandleMouseDown(event: MouseEvent): void {
 }
 
 .mobile-drawer.is-compact {
-  @apply w-[88vw] max-w-[24rem] border-r border-white/10 bg-stone-950;
+  @apply w-[50vw] max-w-[50vw] border-r border-white/10 bg-stone-950;
 }
 
 .drawer-enter-active,

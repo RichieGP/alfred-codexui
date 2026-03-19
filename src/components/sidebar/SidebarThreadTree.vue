@@ -1376,6 +1376,10 @@ onBeforeUnmount(() => {
   @apply text-sm font-normal text-zinc-700 truncate select-none;
 }
 
+:global(.sidebar-root.is-compact) .project-title {
+  @apply font-semibold text-stone-200;
+}
+
 .project-menu-wrap {
   @apply relative;
 }
