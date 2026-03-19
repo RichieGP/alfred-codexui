@@ -1004,7 +1004,7 @@ onBeforeUnmount(() => {
 }
 
 .conversation-root.is-compact .conversation-list {
-  @apply px-2 py-1 gap-2.5;
+  @apply px-3 py-1 gap-2.5;
 }
 
 .conversation-item {
@@ -1219,7 +1219,7 @@ onBeforeUnmount(() => {
 }
 
 .conversation-root.is-compact .message-card[data-role='user'] {
-  @apply rounded-[1.4rem] bg-zinc-800 px-3 py-2 text-white shadow-[0_14px_32px_rgba(24,24,27,0.22)];
+  @apply rounded-[1.4rem] bg-zinc-700 px-3 py-2 text-white shadow-[0_14px_32px_rgba(24,24,27,0.2)];
 }
 
 .message-card[data-role='assistant'],
